@@ -16,25 +16,7 @@ class PendingOrdersPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Consumer<OrdersViewModel>(
-                builder: (context, vm, child) {
-                  final orders = vm.pendingOrders;
-                  if (orders.isEmpty) return _emptyPlaceholder();
-
-                  return ListView.separated(
-                    itemCount: orders.length,
-                    separatorBuilder: (context, index) {
-                      return const Divider(height: 1);
-                    },
-                    itemBuilder: (context, index) {
-                      final order = orders[index];
-                      return OrderItem(order: order);
-                    },
-                  );
-                },
-              ),
-            ),
+            // Buttons moved to top (like Bots page)
             Row(
               children: [
                 _buildOrderButton(
@@ -52,17 +34,31 @@ class PendingOrdersPage extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: Consumer<OrdersViewModel>(
+                builder: (context, vm, child) {
+                  final orders = vm.pendingOrders;
+                  if (orders.isEmpty) return _emptyPlaceholder();
+                  return ListView.separated(
+                    itemCount: orders.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1),
+                    itemBuilder: (context, index) =>
+                        OrderItem(order: orders[index]),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _emptyPlaceholder() {
-    return const Center(
-      child: Text('No pending orders', style: TextStyle(fontSize: 16)),
-    );
-  }
+  Widget _emptyPlaceholder() => const Center(
+    child: Text('No pending orders', style: TextStyle(fontSize: 16)),
+  );
 
   Widget _buildOrderButton({
     required BuildContext context,
@@ -93,7 +89,6 @@ class PendingOrdersPage extends StatelessWidget {
       tier: type,
       createdDate: DateTime.now(),
     );
-
     if (type == OrderTier.vip) {
       vm.addVipOrder(order);
     } else {

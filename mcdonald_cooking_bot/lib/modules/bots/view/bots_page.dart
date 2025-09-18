@@ -22,73 +22,92 @@ class BotsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    'Bots: ${botsVm.botsCount}',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text('Queued Orders: $pendingOrders'),
-                ],
+              _buildHeader(
+                botsCount: botsVm.botsCount,
+                pendingOrders: pendingOrders,
               ),
               const SizedBox(height: 16),
-              Wrap(
+              Row(
                 spacing: 12,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: botsVm.addBot,
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add Bot'),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: botsVm.addBot,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text(
+                        'Bot',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                    ),
                   ),
-                  ElevatedButton.icon(
-                    onPressed: botsVm.botsCount > 0 ? botsVm.removeBot : null,
-                    icon: const Icon(Icons.remove),
-                    label: const Text('Remove Bot'),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: botsVm.botsCount > 0 ? botsVm.removeBot : null,
+                      icon: const Icon(Icons.remove, color: Colors.white),
+                      label: const Text(
+                        'Bot',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              Expanded(
-                child: botsVm.bots.isEmpty
-                    ? const Center(child: Text('No bots yet'))
-                    : ListView.separated(
-                        itemCount: botsVm.bots.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final bot = botsVm.bots[index];
-                          final status = bot.isBusy ? 'Processing' : 'Idle';
-                          final orderTitle = bot.currentOrder?.title ?? '-';
-                          final createdFmt = DateFormat(
-                            'HH:mm:ss',
-                          ).format(bot.createdAt);
-                          return ListTile(
-                            leading: CircleAvatar(child: Text('${index + 1}')),
-                            title: Text('Bot ${bot.id}'),
-                            subtitle: Text(
-                              'Created: $createdFmt\n$status: $orderTitle',
-                            ),
-                            isThreeLine: true,
-                            trailing: bot.isBusy
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                    ),
-                                  )
-                                : const Icon(Icons.pause, color: Colors.grey),
-                          );
-                        },
-                      ),
-              ),
+              _buildBody(botsVm),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildHeader({required int botsCount, required int pendingOrders}) {
+    return Row(
+      children: [
+        Text(
+          'Bots: $botsCount',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(width: 16),
+        Text('Queued Orders: $pendingOrders'),
+      ],
+    );
+  }
+
+  Widget _buildBody(BotsViewModel botsVm) {
+    return Expanded(
+      child: botsVm.bots.isEmpty
+          ? const Center(child: Text('No bots yet'))
+          : ListView.separated(
+              itemCount: botsVm.bots.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final bot = botsVm.bots[index];
+                final status = bot.isBusy ? 'Processing' : 'Idle';
+                final orderTitle = bot.currentOrder?.title ?? '-';
+                final createdFmt = DateFormat('HH:mm:ss').format(bot.createdAt);
+
+                return ListTile(
+                  leading: CircleAvatar(child: Text('${index + 1}')),
+                  title: Text('Bot ${bot.id}'),
+                  subtitle: Text('Created: $createdFmt\n$status: $orderTitle'),
+                  isThreeLine: true,
+                  trailing: bot.isBusy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 3),
+                        )
+                      : const Icon(Icons.pause, color: Colors.grey),
+                );
+              },
+            ),
     );
   }
 }
