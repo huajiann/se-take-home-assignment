@@ -9,12 +9,12 @@ import 'package:mcdonald_cooking_bot/utils/enums.dart';
 class BotsViewModel extends ChangeNotifier {
   final List<BotWorkerModel> _bots = [];
   OrdersViewModel? _ordersVm;
-  int _idSeq = 0;
+  int _idCounter = 0;
   bool _assigning = false;
 
   BotsViewModel([OrdersViewModel? ordersVm]) {
     attach(ordersVm);
-    _initDefaultBot();
+    _loadDefaultBot();
   }
 
   int get botsCount => _bots.length;
@@ -24,48 +24,45 @@ class BotsViewModel extends ChangeNotifier {
     _ordersVm?.removeListener(_onOrdersChanged);
     _ordersVm = ordersVm;
     _ordersVm?.addListener(_onOrdersChanged);
-    Future.microtask(_tryAssignWork);
+    Future.microtask(_performWorkAssignment);
   }
 
   Future<void> addBot() async {
     _bots.add(_createBot());
-    await _tryAssignWork();
+    await _performWorkAssignment();
     notifyListeners();
   }
 
   Future<void> removeBot() async {
     if (_bots.isEmpty) return;
-    final bot = _bots.removeAt(0);
+    final bot = _bots.removeLast();
     _requeueOrderFromBot(bot);
     bot.cancelCurrent();
     bot.dispose();
     notifyListeners();
-    await _tryAssignWork();
+    await _performWorkAssignment();
   }
 
-  void _initDefaultBot() {
+  void _loadDefaultBot() {
     if (_bots.isEmpty) {
       for (int i = 0; i < GeneralConstants.defaultBotCount; i++) {
         _bots.add(_createBot());
       }
-      Future.microtask(_tryAssignWork);
+      Future.microtask(_performWorkAssignment);
     }
   }
 
-  BotWorkerModel _createBot() => BotWorkerModel('BOT-${++_idSeq}');
+  BotWorkerModel _createBot() => BotWorkerModel('BOT-${++_idCounter}');
 
   void _requeueOrderFromBot(BotWorkerModel bot) {
     final order = bot.currentOrder;
     if (order == null) return;
-    order.type = OrderStatusType.pending;
-    order.processingBy = null;
-    order.processingDate = null;
-    _ordersVm?.notifyListeners();
+    _ordersVm?.revertToPending(order.id!);
   }
 
-  void _onOrdersChanged() => _tryAssignWork();
+  void _onOrdersChanged() => _performWorkAssignment();
 
-  Future<void> _tryAssignWork() async {
+  Future<void> _performWorkAssignment() async {
     if (_assigning) return;
     if (_ordersVm == null) return;
     _assigning = true;
@@ -80,8 +77,9 @@ class BotsViewModel extends ChangeNotifier {
     final vm = _ordersVm;
     if (vm == null) return;
 
-    final pending = vm.orders.where((o) {
-      return o.type == OrderStatusType.pending && o.processingBy == null;
+    final pending = vm.orders.where((order) {
+      return order.type == OrderStatusType.pending &&
+          order.processingBy == null;
     }).toList();
 
     if (pending.isEmpty) return;
@@ -102,28 +100,26 @@ class BotsViewModel extends ChangeNotifier {
   }
 
   void _startOrder(BotWorkerModel bot, OrderDataModel order) {
-    order.processingBy = bot.id;
-    order.processingDate = DateTime.now();
-    bot.startOrder(order, () => _finalizeOrder(bot, order));
+    if (order.id == null) return;
+    _ordersVm?.setOrderAsProcessing(id: order.id!, botId: bot.id);
+    bot.startOrder(order, onComplete: () => _completeOrder(bot, order));
   }
 
-  void _finalizeOrder(BotWorkerModel bot, OrderDataModel order) {
-    order.type = OrderStatusType.completed;
-    order.completedBy = bot.id;
-    order.completedDate = DateTime.now();
+  void _completeOrder(BotWorkerModel bot, OrderDataModel order) {
+    if (order.id == null) return;
+    _ordersVm?.completeOrderWithBot(id: order.id!, botId: bot.id);
     bot.isBusy = false;
     bot.currentOrder = null;
     bot.startedAt = null;
-    _ordersVm?.notifyListeners();
     notifyListeners();
-    _tryAssignWork();
+    _performWorkAssignment();
   }
 
   @override
   void dispose() {
     _ordersVm?.removeListener(_onOrdersChanged);
-    for (final b in _bots) {
-      b.dispose();
+    for (final bot in _bots) {
+      bot.dispose();
     }
     super.dispose();
   }

@@ -14,7 +14,7 @@ class BotWorkerModel {
 
   BotWorkerModel(this.id);
 
-  void startOrder(OrderDataModel order, VoidCallback onComplete) {
+  void startOrder(OrderDataModel order, {required VoidCallback onComplete}) {
     isBusy = true;
     currentOrder = order;
     startedAt = DateTime.now();

@@ -9,7 +9,7 @@ enum OrderStatusType {
       case pending:
         return 'PENDING';
       case completed:
-        return 'COMPLETED';
+        return 'COMPLETE';
     }
   }
 }

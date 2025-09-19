@@ -18,7 +18,6 @@ class OrderDataModel {
     this.createdDate,
     this.processingDate,
     this.completedDate,
-    // this.status,
     this.type,
     this.tier,
     this.processingBy,

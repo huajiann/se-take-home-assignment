@@ -28,7 +28,7 @@ class MainApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'McDonalds Cooking Bot',
+        title: 'McDonald\'s Cooking Bot',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
           useMaterial3: true,
@@ -54,7 +54,7 @@ class _MainTabPageState extends State<MainTabPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('McDonald Cooking Bot')),
+      appBar: AppBar(title: const Text('McDonald\'s Cooking Bot')),
       body: _pages[_selectedIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
